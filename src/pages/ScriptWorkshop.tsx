@@ -58,6 +58,7 @@ export default function ScriptWorkshop({ triggerToast, initialData, onClearIniti
   const [isGenerating, setIsGenerating] = useState(false);
   const [editorContent, setEditorContent] = useState<string>('');
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Settings & Optimization State
   const [showSettings, setShowSettings] = useState(true);
@@ -113,15 +114,37 @@ export default function ScriptWorkshop({ triggerToast, initialData, onClearIniti
     triggerToast(`已切换至: ${project.title}`);
   };
 
-  const handleFileUpload = (type: string) => {
-    const newFile = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: `${type === 'image' ? 'IMG' : 'DOC'}_${Math.floor(Math.random() * 1000)}.${type === 'image' ? 'png' : 'pdf'}`,
-      type: type
-    };
-    setUploadedFiles(prev => [...prev, newFile]);
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
     setShowUploadMenu(false);
-    triggerToast(`已添加: ${newFile.name}`);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadFile(file);
+    e.target.value = '';
+  };
+
+  const uploadFile = async (file: File) => {
+    triggerToast(`正在解析: ${file.name}...`);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.error) { triggerToast(`解析失败: ${data.error}`); return; }
+
+      setInputText(prev => {
+        const prefix = prev ? prev + '\n\n---\n\n' : '';
+        return prefix + `【${file.name}】\n${data.text}`;
+      });
+      setUploadedFiles(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), name: file.name, type: file.type }]);
+      triggerToast(`解析完成: ${file.name} (${data.charCount || data.text.length}字)`);
+    } catch (err) {
+      triggerToast('上传失败，请检查网络');
+    }
   };
 
   const scriptTypes = [
@@ -201,31 +224,70 @@ export default function ScriptWorkshop({ triggerToast, initialData, onClearIniti
   const [detectedWords, setDetectedWords] = useState<{word: string, index: number}[]>([]);
   const [activeReplaceWord, setActiveReplaceWord] = useState<string | null>(null);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!inputText) {
       triggerToast("请输入初稿内容");
       return;
     }
     setIsGenerating(true);
-    setTimeout(() => {
-      const result = `# 【脚本预览】如何利用AI实现指数级增长\n\n[黄金开头]\n${opening === 'suspense' ? '你可能不知道，就在上个月，有人用这个方法多赚了3万...' : '99%的博主都在犯这个致命错误。'}\n\n[正文节奏]\n现在的算法逻辑已经彻底变了。如果你还像去年那样拍视频，注定没有流量。\n\n[爆点设定]\n注意看，这里才是最关键的逻辑闭环！\n\n[行动召唤]\n点击头像，我带你跑通全流程。`;
-      setEditorContent(result);
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: inputText,
+          scriptType,
+          intensity,
+          tempo,
+          opening,
+          platform: selectedPlatform,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) { triggerToast(`生成失败: ${data.error}`); setIsGenerating(false); return; }
+
+      setEditorContent(data.script);
       setIsGenerating(false);
-      triggerToast(`AI 脚本已生成！使用模型: ${availableModels.find(m => m.id === selectedModel)?.name}`);
-    }, 1500);
+      triggerToast(`AI 脚本已生成！`);
+    } catch (err) {
+      triggerToast("生成失败，请检查网络");
+      setIsGenerating(false);
+    }
   };
 
-  const handleOptimizationSubmit = (e: React.FormEvent) => {
+  const handleOptimizationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!optimizationPrompt || !editorContent) return;
 
     setIsOptimizing(true);
-    setTimeout(() => {
-      setEditorContent(prev => prev + `\n\n[AI 优化 - ${availableModels.find(m => m.id === selectedModel)?.name}]\n针对您的需求「${optimizationPrompt}」，已对脚本进行如下调整：优化了段落结构、增强了表达力度、调整了节奏感。`);
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: optimizationPrompt,
+          scriptType,
+          intensity,
+          tempo,
+          opening,
+          platform: selectedPlatform,
+          optimizationPrompt,
+          contextText: editorContent,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) { triggerToast(`优化失败: ${data.error}`); setIsOptimizing(false); return; }
+
+      setEditorContent(data.script);
       setOptimizationPrompt('');
       setIsOptimizing(false);
-      triggerToast("脚本已根据您的要求优化完成！");
-    }, 1500);
+      triggerToast("脚本已优化完成！");
+    } catch (err) {
+      triggerToast("优化失败，请检查网络");
+      setIsOptimizing(false);
+    }
   };
 
   // 2.1 一键应用推荐参数
@@ -253,6 +315,13 @@ export default function ScriptWorkshop({ triggerToast, initialData, onClearIniti
 
   return (
     <div className="pb-12 min-h-screen pt-4 relative">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+        accept=".txt,.md,.docx,.pdf,.jpg,.jpeg,.png,.webp"
+        className="hidden"
+      />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -385,22 +454,22 @@ export default function ScriptWorkshop({ triggerToast, initialData, onClearIniti
 
                               <div className="grid grid-cols-2 gap-3">
                                 <button
-                                  onClick={() => handleFileUpload('doc')}
+                                  onClick={() => handleFileUpload()}
                                   className="flex flex-col items-center gap-2 p-4 hover:bg-bg text-text-secondary transition-colors rounded-xl font-normal border border-border-custom/15 press"
                                 >
                                   <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
                                     <Cloud size={20} />
                                   </div>
-                                  <span className="text-base">云盘文件</span>
+                                  <span className="text-base">上传文件</span>
                                 </button>
                                 <button
-                                  onClick={() => handleFileUpload('image')}
+                                  onClick={() => handleFileUpload()}
                                   className="flex flex-col items-center gap-2 p-4 hover:bg-bg text-text-secondary transition-colors rounded-xl font-normal border border-border-custom/15 press"
                                 >
                                   <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-500">
                                     <Paperclip size={20} />
                                   </div>
-                                  <span className="text-base">上传附件</span>
+                                  <span className="text-base">上传图片</span>
                                 </button>
                               </div>
                             </motion.div>
