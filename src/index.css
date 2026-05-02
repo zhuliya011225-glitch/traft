@@ -1,0 +1,320 @@
+/**
+ * Design Reference: Apple Design Resources
+ * https://developer.apple.com/design/
+ *
+ * Features:
+ * - Liquid Glass (backdrop-filter) card system
+ * - CSS Scroll-driven Animations (Safari 19+)
+ * - SF Pro + PingFang SC font stack
+ * - Apple-style easing: cubic-bezier(0.2, 0.9, 0.4, 1.1)
+ */
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Light mode — clean white background, deep blue text, light blue accents */
+  --bg: #F5F5F7;
+  --bg-elevated: #FFFFFF;
+  --card: rgba(255, 255, 255, 0.72);
+  --text: #18202B;
+  --text-secondary: #6B7A91;
+  --text-muted: #86868B;
+  --primary: #18202B;
+  --accent: #5E7BA8;
+  --border: rgba(24, 32, 43, 0.06);
+  --success: #34C759;
+  --warning: #FF9500;
+  --error: #FF453A;
+  --hover-primary: #2A3440;
+  --hover-accent: rgba(211, 223, 242, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(24, 32, 43, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.16);
+}
+
+.dark {
+  /* Dark mode — deep blue palette */
+  --bg: #0F151C;
+  --bg-elevated: #18202B;
+  --card: rgba(24, 32, 43, 0.72);
+  --text: #D3DFF2;
+  --text-secondary: #8BA0BE;
+  --text-muted: #5C6B82;
+  --primary: #D3DFF2;
+  --accent: #5E7BA8;
+  --border: rgba(211, 223, 242, 0.08);
+  --success: #30D158;
+  --warning: #FF9F0A;
+  --error: #FF453A;
+  --hover-primary: #E8EEF9;
+  --hover-accent: rgba(211, 223, 242, 0.12);
+  --glass-bg: rgba(24, 32, 43, 0.72);
+  --glass-border: rgba(211, 223, 242, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-border-custom: var(--border);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-hover-primary: var(--hover-primary);
+  --color-hover-accent: var(--hover-accent);
+
+  --font-sans: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bg text-text antialiased font-sans font-normal;
+    font-feature-settings: "tnum" 1, "kern" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  i, em, .italic, [style*="font-style: italic"], .italic span {
+    font-style: normal !important;
+  }
+}
+
+/* ==================== Liquid Glass Card ==================== */
+.apple-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1),
+              box-shadow 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1),
+              background-color 0.3s ease,
+              border-color 0.3s ease;
+  will-change: transform, box-shadow;
+}
+
+.apple-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-lg);
+}
+
+.dark .apple-card:hover {
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* ==================== Glass Panel ==================== */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+/* ==================== Primary Button ==================== */
+.btn-primary {
+  background: #D3DFF2;
+  color: #18202B;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 12px;
+  padding: 10px 20px;
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  letter-spacing: -0.01em;
+}
+
+.btn-primary:hover {
+  background: #C8D6ED;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(24, 32, 43, 0.12);
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+}
+
+/* ==================== Secondary Button ==================== */
+.btn-secondary {
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 12px;
+  padding: 10px 20px;
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.btn-secondary:hover {
+  background: var(--hover-accent);
+  border-color: var(--primary);
+}
+
+.btn-secondary:active {
+  transform: scale(0.96);
+}
+
+/* ==================== Ghost Button ==================== */
+.btn-ghost {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 15px;
+  border-radius: 12px;
+  padding: 8px 16px;
+  transition: all 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ==================== Press Feedback ==================== */
+.press {
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.press:active {
+  transform: scale(0.96);
+}
+
+/* ==================== CSS Scroll-driven Animations ==================== */
+@supports (animation-timeline: scroll()) {
+  .scroll-reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 25%;
+  }
+
+  .scroll-reveal-delay-1 {
+    animation-range: entry 5% cover 30%;
+  }
+
+  .scroll-reveal-delay-2 {
+    animation-range: entry 10% cover 35%;
+  }
+
+  .scroll-reveal-delay-3 {
+    animation-range: entry 15% cover 40%;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Fallback for browsers without scroll-driven animations */
+@supports not (animation-timeline: scroll()) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==================== Parallax Background ==================== */
+.parallax-slow {
+  will-change: transform;
+}
+
+@supports (animation-timeline: scroll()) {
+  .parallax-slow {
+    animation: parallax linear;
+    animation-timeline: scroll(root);
+  }
+
+  @keyframes parallax {
+    to {
+      transform: translateY(-60px);
+    }
+  }
+}
+
+/* ==================== Entrance Animation ==================== */
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+}
+
+/* ==================== Stagger Children ==================== */
+.stagger > * {
+  opacity: 0;
+  animation: fade-up 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0s; }
+.stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.stagger > *:nth-child(4) { animation-delay: 0.24s; }
+.stagger > *:nth-child(5) { animation-delay: 0.32s; }
+.stagger > *:nth-child(6) { animation-delay: 0.40s; }
+
+/* ==================== Scrollbar ==================== */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ==================== Utilities ==================== */
+.mono { font-family: var(--font-mono); }
+.font-legacy { font-family: var(--font-display); }
+.ease-apple { transition-timing-function: cubic-bezier(0.2, 0.9, 0.4, 1.1); }
+
+

@@ -1,0 +1,11 @@
+{
+  "name": "Traft - 灵感成稿，增长有道",
+  "description": "通过AI自动生成、测试并优化内容策略的增长型Agent，帮助知识付费型KOC实现低成本涨粉与转化。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "AI内容创作",
+    "趋势分析",
+    "分发建议",
+    "增长看板"
+  ]
+}

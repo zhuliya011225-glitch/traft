@@ -1,0 +1,8 @@
+
+.shiny-text {
+  display: inline-block;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-size: 200% auto;
+  transition: background-position 0.1s linear;
+}
